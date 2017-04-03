@@ -9,6 +9,7 @@ from .shells import shell
 from .conf import settings
 from .const import DEFAULT_PRIORITY, ALL_ENABLED
 from .exceptions import EmptyCommand
+from .utils import get_alias
 
 
 class Command(object):
@@ -40,8 +41,8 @@ class Command(object):
 
     def __eq__(self, other):
         if isinstance(other, Command):
-            return (self.script, self.stdout, self.stderr) \
-                   == (other.script, other.stdout, other.stderr)
+            return ((self.script, self.stdout, self.stderr)
+                    == (other.script, other.stdout, other.stderr))
         else:
             return False
 
@@ -159,12 +160,12 @@ class Rule(object):
 
     def __eq__(self, other):
         if isinstance(other, Rule):
-            return (self.name, self.match, self.get_new_command,
-                    self.enabled_by_default, self.side_effect,
-                    self.priority, self.requires_output) \
-                   == (other.name, other.match, other.get_new_command,
-                       other.enabled_by_default, other.side_effect,
-                       other.priority, other.requires_output)
+            return ((self.name, self.match, self.get_new_command,
+                     self.enabled_by_default, self.side_effect,
+                     self.priority, self.requires_output)
+                    == (other.name, other.match, other.get_new_command,
+                        other.enabled_by_default, other.side_effect,
+                        other.priority, other.requires_output))
         else:
             return False
 
@@ -172,9 +173,9 @@ class Rule(object):
         return 'Rule(name={}, match={}, get_new_command={}, ' \
                'enabled_by_default={}, side_effect={}, ' \
                'priority={}, requires_output)'.format(
-            self.name, self.match, self.get_new_command,
-            self.enabled_by_default, self.side_effect,
-            self.priority, self.requires_output)
+                   self.name, self.match, self.get_new_command,
+                   self.enabled_by_default, self.side_effect,
+                   self.priority, self.requires_output)
 
     @classmethod
     def from_path(cls, path):
@@ -276,6 +277,22 @@ class CorrectedCommand(object):
         return u'CorrectedCommand(script={}, side_effect={}, priority={})'.format(
             self.script, self.side_effect, self.priority)
 
+    def _get_script(self):
+        """Returns fixed commands script.
+
+        If `settings.repeat` is `True`, appends command with second attempt
+        of running fuck in case fixed command fails again.
+
+        """
+        if settings.repeat:
+            repeat_fuck = '{} --repeat {}--force-command {}'.format(
+                get_alias(),
+                '--debug ' if settings.debug else '',
+                shell.quote(self.script))
+            return shell.or_(self.script, repeat_fuck)
+        else:
+            return self.script
+
     def run(self, old_cmd):
         """Runs command from rule for passed command.
 
@@ -289,4 +306,5 @@ class CorrectedCommand(object):
         # This depends on correct setting of PYTHONIOENCODING by the alias:
         logs.debug(u'PYTHONIOENCODING: {}'.format(
             os.environ.get('PYTHONIOENCODING', '!!not-set!!')))
-        print(self.script)
+
+        print(self._get_script())

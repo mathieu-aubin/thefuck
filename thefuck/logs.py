@@ -80,17 +80,50 @@ def debug_time(msg):
 
 
 def how_to_configure_alias(configuration_details):
-    print("Seems like {bold}fuck{reset} alias isn't configured!".format(
+    print(u"Seems like {bold}fuck{reset} alias isn't configured!".format(
         bold=color(colorama.Style.BRIGHT),
         reset=color(colorama.Style.RESET_ALL)))
 
     if configuration_details:
         print(
-            "Please put {bold}{content}{reset} in your "
-            "{bold}{path}{reset} and apply "
-            "changes with {bold}{reload}{reset} or restart your shell.".format(
+            u"Please put {bold}{content}{reset} in your "
+            u"{bold}{path}{reset} and apply "
+            u"changes with {bold}{reload}{reset} or restart your shell.".format(
                 bold=color(colorama.Style.BRIGHT),
                 reset=color(colorama.Style.RESET_ALL),
-                **configuration_details))
+                **configuration_details._asdict()))
 
-    print('More details - https://github.com/nvbn/thefuck#manual-installation')
+        if configuration_details.can_configure_automatically:
+            print(
+                u"Or run {bold}fuck{reset} second time for configuring"
+                u" it automatically.".format(
+                    bold=color(colorama.Style.BRIGHT),
+                    reset=color(colorama.Style.RESET_ALL)))
+
+    print(u'More details - https://github.com/nvbn/thefuck#manual-installation')
+
+
+def already_configured(configuration_details):
+    print(
+        u"Seems like {bold}fuck{reset} alias already configured!\n"
+        u"For applying changes run {bold}{reload}{reset}"
+        u" or restart your shell.".format(
+            bold=color(colorama.Style.BRIGHT),
+            reset=color(colorama.Style.RESET_ALL),
+            reload=configuration_details.reload))
+
+
+def configured_successfully(configuration_details):
+    print(
+        u"{bold}fuck{reset} alias configured successfully!\n"
+        u"For applying changes run {bold}{reload}{reset}"
+        u" or restart your shell.".format(
+            bold=color(colorama.Style.BRIGHT),
+            reset=color(colorama.Style.RESET_ALL),
+            reload=configuration_details.reload))
+
+
+def version(thefuck_version, python_version):
+    sys.stderr.write(
+        u'The Fuck {} using Python {}'.format(thefuck_version,
+                                              python_version))

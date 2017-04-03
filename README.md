@@ -106,13 +106,13 @@ On Ubuntu you can install `The Fuck` with:
 ```bash
 sudo apt update
 sudo apt install python3-dev python3-pip
-sudo -H pip3 install thefuck
+pip3 install --user thefuck
 ```
 
 On other systems you can install `The Fuck` with `pip`:
 
 ```bash
-sudo -H pip install thefuck
+pip install --user thefuck
 ```
 
 [Or using an OS package manager (OS X, Ubuntu, Arch).](https://github.com/nvbn/thefuck/wiki/Installation)
@@ -120,9 +120,9 @@ sudo -H pip install thefuck
 You should place this command in your `.bash_profile`, `.bashrc`, `.zshrc` or other startup script:
 
 ```bash
-eval "$(thefuck --alias)"
+eval $(thefuck --alias)
 # You can use whatever you want as an alias, like for Mondays:
-eval "$(thefuck --alias FUCK)"
+eval $(thefuck --alias FUCK)
 ```
 
 [Or in your shell config (Bash, Zsh, Fish, Powershell, tcsh).](https://github.com/nvbn/thefuck/wiki/Shell-aliases)
@@ -130,11 +130,16 @@ eval "$(thefuck --alias FUCK)"
 Changes will be available only in a new shell session.
 To make them available immediately, run `source ~/.bashrc` (or your shell config file like `.zshrc`).
 
+If you want separate alias for running fixed command without confirmation you can use alias like:
+
+```bash
+alias fuck-it='export THEFUCK_REQUIRE_CONFIRMATION=False; fuck; export THEFUCK_REQUIRE_CONFIRMATION=True'
+```
 
 ## Update
 
 ```bash
-sudo -H pip install thefuck --upgrade
+pip install --user thefuck --upgrade
 ```
 
 **Aliases changed in 1.34.**
@@ -183,6 +188,7 @@ using the matched rule and runs it. Rules enabled by default are as follows:
 * `git_pull_uncommitted_changes` &ndash; stashes changes before pulling and pops them afterwards;
 * `git_push` &ndash; adds `--set-upstream origin $branch` to previous failed `git push`;
 * `git_push_pull` &ndash; runs `git pull` when `push` was rejected;
+* `git_push_without_commits` &ndash; Creates an initial commit if you forget and only `git add .`, when setting up a new project;
 * `git_rebase_no_changes` &ndash; runs `git rebase --skip` instead of `git rebase --continue` when there are no changes;
 * `git_rm_local_modifications` &ndash;  adds `-f` or `--cached` when you try to `rm` a locally modified file;
 * `git_rm_recursive` &ndash; adds `-r` when you try to `rm` a directory;
@@ -203,6 +209,7 @@ using the matched rule and runs it. Rules enabled by default are as follows:
 * `has_exists_script` &ndash; prepends `./` when script/binary exists;
 * `heroku_not_command` &ndash; fixes wrong `heroku` commands like `heroku log`;
 * `history` &ndash; tries to replace command with most similar command from history;
+* `hostscli` &ndash; tries to fix `hostscli` usage;
 * `ifconfig_device_not_found` &ndash; fixes wrong device names like `wlan0` to `wlp2s0`;
 * `java` &ndash; removes `.java` extension when running Java programs;
 * `javac` &ndash; appends missing `.java` when compiling Java files;
@@ -214,6 +221,7 @@ using the matched rule and runs it. Rules enabled by default are as follows:
 * `man` &ndash; changes manual section;
 * `man_no_space` &ndash; fixes man commands without spaces, for example `mandiff`;
 * `mercurial` &ndash; fixes wrong `hg` commands;
+* `missing_space_before_subcommand` &ndash; fixes command with missing space like `npminstall`;
 * `mkdir_p` &ndash; adds `-p` when you trying to create directory without parent;
 * `mvn_no_command` &ndash; adds `clean package` to `mvn`;
 * `mvn_unknown_lifecycle_phase` &ndash; fixes misspelled lifecycle phases with `mvn`;
@@ -228,6 +236,7 @@ using the matched rule and runs it. Rules enabled by default are as follows:
 * `python_command` &ndash; prepends `python` when you trying to run not executable/without `./` python script;
 * `python_execute` &ndash; appends missing `.py` when executing Python files;
 * `quotation_marks` &ndash; fixes uneven usage of `'` and `"` when containing args';
+* `path_from_history` &ndash; replaces not found path with similar absolute path from history;
 * `react_native_command_unrecognized` &ndash; fixes unrecognized `react-native` commands;
 * `remove_trailing_cedilla` &ndash; remove trailling cedillas `ç`, a common typo for european keyboard layouts;
 * `rm_dir` &ndash; adds `-rf` when you trying to remove directory;
@@ -250,6 +259,8 @@ using the matched rule and runs it. Rules enabled by default are as follows:
 * `workon_doesnt_exists` &ndash; fixes `virtualenvwrapper` env name os suggests to create new.
 * `yarn_alias` &ndash; fixes aliased `yarn` commands like `yarn ls`;
 * `yarn_command_not_found` &ndash; fixes misspelled `yarn` commands;
+* `yarn_command_replaced` &ndash; fixes replaced `yarn` commands;
+* `yarn_help` &ndash; makes it easier to open `yarn` documentation;
 
 Enabled by default only on specific platforms:
 
@@ -385,6 +396,12 @@ Install `The Fuck` for development:
 ```bash
 pip install -r requirements.txt
 python setup.py develop
+```
+
+Run code style checks:
+
+```bash
+flake8
 ```
 
 Run unit tests:

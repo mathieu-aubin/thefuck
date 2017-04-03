@@ -2,8 +2,14 @@ import io
 import os
 import shlex
 import six
+from collections import namedtuple
 from ..utils import memoize
 from ..conf import settings
+from ..system import Path
+
+
+ShellConfiguration = namedtuple('ShellConfiguration', (
+    'content', 'path', 'reload', 'can_configure_automatically'))
 
 
 class Generic(object):
@@ -60,13 +66,21 @@ class Generic(object):
     def and_(self, *commands):
         return u' && '.join(commands)
 
+    def or_(self, *commands):
+        return u' || '.join(commands)
+
     def how_to_configure(self):
         return
 
     def split_command(self, command):
         """Split the command using shell-like syntax."""
         encoded = self.encode_utf8(command)
-        splitted = shlex.split(encoded)
+
+        try:
+            splitted = shlex.split(encoded)
+        except ValueError:
+            splitted = encoded.split(' ')
+
         return self.decode_utf8(splitted)
 
     def encode_utf8(self, command):
@@ -99,3 +113,22 @@ class Generic(object):
         all shells support it (Fish).
 
         """
+
+    def get_builtin_commands(self):
+        """Returns shells builtin commands."""
+        return ['alias', 'bg', 'bind', 'break', 'builtin', 'case', 'cd',
+                'command', 'compgen', 'complete', 'continue', 'declare',
+                'dirs', 'disown', 'echo', 'enable', 'eval', 'exec', 'exit',
+                'export', 'fc', 'fg', 'getopts', 'hash', 'help', 'history',
+                'if', 'jobs', 'kill', 'let', 'local', 'logout', 'popd',
+                'printf', 'pushd', 'pwd', 'read', 'readonly', 'return', 'set',
+                'shift', 'shopt', 'source', 'suspend', 'test', 'times', 'trap',
+                'type', 'typeset', 'ulimit', 'umask', 'unalias', 'unset',
+                'until', 'wait', 'while']
+
+    def _create_shell_configuration(self, content, path, reload):
+        return ShellConfiguration(
+            content=content,
+            path=path,
+            reload=reload,
+            can_configure_automatically=Path(path).expanduser().exists())

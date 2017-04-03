@@ -3,6 +3,7 @@ import sys
 import tty
 import termios
 import colorama
+from distutils.spawn import find_executable
 from .. import const
 
 init_output = colorama.init
@@ -35,6 +36,13 @@ def get_key():
 
     return ch
 
+
+def open_command(arg):
+    if find_executable('xdg-open'):
+        return 'xdg-open ' + arg
+    return 'open ' + arg
+
+
 try:
     from pathlib import Path
 except ImportError:
@@ -43,6 +51,7 @@ except ImportError:
 
 def _expanduser(self):
     return self.__class__(os.path.expanduser(str(self)))
+
 
 if not hasattr(Path, 'expanduser'):
     Path.expanduser = _expanduser

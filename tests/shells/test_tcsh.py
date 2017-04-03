@@ -34,6 +34,9 @@ class TestTcsh(object):
     def test_and_(self, shell):
         assert shell.and_('ls', 'cd') == 'ls && cd'
 
+    def test_or_(self, shell):
+        assert shell.or_('ls', 'cd') == 'ls || cd'
+
     def test_get_aliases(self, shell):
         assert shell.get_aliases() == {'fuck': 'eval $(thefuck $(fc -ln -1))',
                                        'l': 'ls -CF',
@@ -48,3 +51,12 @@ class TestTcsh(object):
     def test_get_history(self, history_lines, shell):
         history_lines(['ls', 'rm'])
         assert list(shell.get_history()) == ['ls', 'rm']
+
+    def test_how_to_configure(self, shell, config_exists):
+        config_exists.return_value = True
+        assert shell.how_to_configure().can_configure_automatically
+
+    def test_how_to_configure_when_config_not_found(self, shell,
+                                                    config_exists):
+        config_exists.return_value = False
+        assert not shell.how_to_configure().can_configure_automatically

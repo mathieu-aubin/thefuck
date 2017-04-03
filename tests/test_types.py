@@ -13,10 +13,10 @@ from thefuck.system import Path
 class TestCorrectedCommand(object):
 
     def test_equality(self):
-        assert CorrectedCommand('ls', None, 100) == \
-               CorrectedCommand('ls', None, 200)
-        assert CorrectedCommand('ls', None, 100) != \
-               CorrectedCommand('ls', lambda *_: _, 100)
+        assert (CorrectedCommand('ls', None, 100) ==
+                CorrectedCommand('ls', None, 200))
+        assert (CorrectedCommand('ls', None, 100) !=
+                CorrectedCommand('ls', lambda *_: _, 100))
 
     def test_hashable(self):
         assert {CorrectedCommand('ls', None, 100),
@@ -27,6 +27,20 @@ class TestCorrectedCommand(object):
                'CorrectedCommand(script=ls, side_effect=None, priority=100)'
         assert u'{}'.format(CorrectedCommand(u'echo café', None, 100)) == \
                u'CorrectedCommand(script=echo café, side_effect=None, priority=100)'
+
+    @pytest.mark.parametrize('script, printed, override_settings', [
+        ('git branch', 'git branch', {'repeat': False, 'debug': False}),
+        ('git brunch',
+         "git brunch || fuck --repeat --force-command 'git brunch'",
+         {'repeat': True, 'debug': False}),
+        ('git brunch',
+         "git brunch || fuck --repeat --debug --force-command 'git brunch'",
+         {'repeat': True, 'debug': True})])
+    def test_run(self, capsys, settings, script, printed, override_settings):
+        settings.update(override_settings)
+        CorrectedCommand(script, None, 1000).run(Command())
+        out, _ = capsys.readouterr()
+        assert out[:-1] == printed
 
 
 class TestRule(object):
@@ -41,8 +55,8 @@ class TestRule(object):
                               priority=900,
                               requires_output=True))
         rule_path = os.path.join(os.sep, 'rules', 'bash.py')
-        assert Rule.from_path(Path(rule_path)) \
-               == Rule('bash', match, get_new_command, priority=900)
+        assert (Rule.from_path(Path(rule_path))
+                == Rule('bash', match, get_new_command, priority=900))
         load_source.assert_called_once_with('bash', rule_path)
 
     @pytest.mark.parametrize('rules, exclude_rules, rule, is_enabled', [
@@ -79,15 +93,15 @@ class TestRule(object):
     def test_get_corrected_commands_with_rule_returns_list(self):
         rule = Rule(get_new_command=lambda x: [x.script + '!', x.script + '@'],
                     priority=100)
-        assert list(rule.get_corrected_commands(Command(script='test'))) \
-               == [CorrectedCommand(script='test!', priority=100),
-                   CorrectedCommand(script='test@', priority=200)]
+        assert (list(rule.get_corrected_commands(Command(script='test')))
+                == [CorrectedCommand(script='test!', priority=100),
+                    CorrectedCommand(script='test@', priority=200)])
 
     def test_get_corrected_commands_with_rule_returns_command(self):
         rule = Rule(get_new_command=lambda x: x.script + '!',
                     priority=100)
-        assert list(rule.get_corrected_commands(Command(script='test'))) \
-               == [CorrectedCommand(script='test!', priority=100)]
+        assert (list(rule.get_corrected_commands(Command(script='test')))
+                == [CorrectedCommand(script='test!', priority=100)])
 
 
 class TestCommand(object):

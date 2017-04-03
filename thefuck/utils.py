@@ -40,6 +40,8 @@ def memoize(fn):
         return value
 
     return wrapper
+
+
 memoize.disabled = False
 
 
@@ -109,12 +111,15 @@ def get_all_executables():
     tf_entry_points = get_installation_info().get_entry_map()\
                                              .get('console_scripts', {})\
                                              .keys()
+
     bins = [exe.name.decode('utf8') if six.PY2 else exe.name
             for path in os.environ.get('PATH', '').split(':')
             for exe in _safe(lambda: list(Path(path).iterdir()), [])
             if not _safe(exe.is_dir, True)
             and exe.name not in tf_entry_points]
-    aliases = [alias for alias in shell.get_aliases() if alias != tf_alias]
+    aliases = [alias.decode('utf8') if six.PY2 else alias
+               for alias in shell.get_aliases() if alias != tf_alias]
+
     return bins + aliases
 
 
@@ -176,6 +181,21 @@ def for_app(*app_names, **kwargs):
     return decorator(_for_app)
 
 
+def get_cache_dir():
+    default_xdg_cache_dir = os.path.expanduser("~/.cache")
+    cache_dir = os.getenv("XDG_CACHE_HOME", default_xdg_cache_dir)
+
+    # Ensure the cache_path exists, Python 2 does not have the exist_ok
+    # parameter
+    try:
+        os.makedirs(cache_dir)
+    except OSError:
+        if not os.path.isdir(cache_dir):
+            raise
+
+    return cache_dir
+
+
 def cache(*depends_on):
     """Caches function result in temporary file.
 
@@ -192,21 +212,6 @@ def cache(*depends_on):
         except OSError:
             return '0'
 
-    def _get_cache_path():
-        default_xdg_cache_dir = os.path.expanduser("~/.cache")
-        cache_dir = os.getenv("XDG_CACHE_HOME", default_xdg_cache_dir)
-        cache_path = Path(cache_dir).joinpath('thefuck').as_posix()
-
-        # Ensure the cache_path exists, Python 2 does not have the exist_ok
-        # parameter
-        try:
-            os.makedirs(cache_dir)
-        except OSError:
-            if not os.path.isdir(cache_dir):
-                raise
-
-        return cache_path
-
     @decorator
     def _cache(fn, *args, **kwargs):
         if cache.disabled:
@@ -217,7 +222,8 @@ def cache(*depends_on):
         key = '{}.{}'.format(fn.__module__, repr(fn).split('at')[0])
 
         etag = '.'.join(_get_mtime(name) for name in depends_on)
-        cache_path = _get_cache_path()
+        cache_dir = get_cache_dir()
+        cache_path = Path(cache_dir).joinpath('thefuck').as_posix()
 
         try:
             with closing(shelve.open(cache_path)) as db:
@@ -238,6 +244,8 @@ def cache(*depends_on):
                 return value
 
     return _cache
+
+
 cache.disabled = False
 
 
@@ -264,7 +272,9 @@ def get_valid_history_without_current(command):
     from thefuck.shells import shell
     history = shell.get_history()
     tf_alias = get_alias()
-    executables = set(get_all_executables())
+    executables = set(get_all_executables())\
+        .union(shell.get_builtin_commands())
+
     return [line for line in _not_corrected(history, tf_alias)
             if not line.startswith(tf_alias) and not line == command.script
             and line.split(' ')[0] in executables]

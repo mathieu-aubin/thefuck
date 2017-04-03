@@ -33,6 +33,9 @@ class TestBash(object):
     def test_and_(self, shell):
         assert shell.and_('ls', 'cd') == 'ls && cd'
 
+    def test_or_(self, shell):
+        assert shell.or_('ls', 'cd') == 'ls || cd'
+
     def test_get_aliases(self, shell):
         assert shell.get_aliases() == {'fuck': 'eval $(thefuck $(fc -ln -1))',
                                        'l': 'ls -CF',
@@ -40,18 +43,17 @@ class TestBash(object):
                                        'll': 'ls -alF'}
 
     def test_app_alias(self, shell):
-        assert 'alias fuck' in shell.app_alias('fuck')
-        assert 'alias FUCK' in shell.app_alias('FUCK')
+        assert 'fuck () {' in shell.app_alias('fuck')
+        assert 'FUCK () {' in shell.app_alias('FUCK')
         assert 'thefuck' in shell.app_alias('fuck')
-        assert 'TF_ALIAS=fuck' in shell.app_alias('fuck')
-        assert 'PYTHONIOENCODING=utf-8' in shell.app_alias('fuck')
+        assert 'PYTHONIOENCODING' in shell.app_alias('fuck')
 
     def test_app_alias_variables_correctly_set(self, shell):
         alias = shell.app_alias('fuck')
-        assert "alias fuck='TF_CMD=$(TF_ALIAS" in alias
-        assert '$(TF_ALIAS=fuck PYTHONIOENCODING' in alias
-        assert 'PYTHONIOENCODING=utf-8 TF_SHELL_ALIASES' in alias
-        assert 'ALIASES=$(alias) thefuck' in alias
+        assert "fuck () {" in alias
+        assert "TF_ALIAS=fuck" in alias
+        assert 'PYTHONIOENCODING=utf-8' in alias
+        assert 'TF_SHELL_ALIASES=$(alias)' in alias
 
     def test_get_history(self, history_lines, shell):
         history_lines(['ls', 'rm'])
@@ -61,3 +63,12 @@ class TestBash(object):
         command = 'git log -p'
         command_parts = ['git', 'log', '-p']
         assert shell.split_command(command) == command_parts
+
+    def test_how_to_configure(self, shell, config_exists):
+        config_exists.return_value = True
+        assert shell.how_to_configure().can_configure_automatically
+
+    def test_how_to_configure_when_config_not_found(self, shell,
+                                                    config_exists):
+        config_exists.return_value = False
+        assert not shell.how_to_configure().can_configure_automatically

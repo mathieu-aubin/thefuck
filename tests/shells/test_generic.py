@@ -18,6 +18,9 @@ class TestGeneric(object):
     def test_and_(self, shell):
         assert shell.and_('ls', 'cd') == 'ls && cd'
 
+    def test_or_(self, shell):
+        assert shell.or_('ls', 'cd') == 'ls || cd'
+
     def test_get_aliases(self, shell):
         assert shell.get_aliases() == {}
 
@@ -37,3 +40,6 @@ class TestGeneric(object):
     def test_split_command(self, shell):
         assert shell.split_command('ls') == ['ls']
         assert shell.split_command(u'echo café') == [u'echo', u'café']
+
+    def test_how_to_configure(self, shell):
+        assert shell.how_to_configure() is None
